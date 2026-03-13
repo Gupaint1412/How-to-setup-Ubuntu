@@ -1,0 +1,70 @@
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!  อย่าลืมดู keyboard lock ก่อนนะ   (ถ้าใช้ key board ไม่ได้ให้ไปสูบบุหรี่ก่อน)
+1.ตรวจสอบก่อนว่า directory ว่างจริง Netplan
+ls -l /etc/netplan
+ถ้าผลลัพธ์เป็น  total 0  total 0
+1) ตรวจสอบว่า interface มีอยู่หรือไม่
+ip link
+เปิด interface ถ้ายัง DOWN
+sudo ip link set ens18 up
+สร้างไฟล์ Netplan ใหม่
+sudo nano /etc/netplan/01-netcfg.yaml
+****************** start file ********************
+network:
+··version: 2
+··renderer: networkd
+··ethernets:
+····ens18:
+······dhcp4: no
+······addresses:
+········- 192.168.1.50/24
+······routes:
+········- to: default
+··········via: 192.168.1.1
+······nameservers:
+········addresses:
+··········- 8.8.8.8
+··········- 1.1.1.1
+****************** end file ********************
+ctrl+o + enter for save
+ctrl+x for exit
+sudo netplan generate   ---> check syntax
+sudo netplan apply       ---> use config
+************ ถ้า save file ไม่ได้ ************
+sudo chmod 600 /etc/netplan/01-netcfg.yaml
+*************************************************
+!!!!!!!!!!!!!!!!!!!! set Fortigate ให้ออกเน็ตได้
+test ping 8.8.8.8
+sudo apt update
+sudo apt upgrade
+--------------------------------------------------------------------------------
+2.ตั้ง timezone
+sudo timedatectl set-timezone Asia/Bangkok
+ตรวจสอบ
+timedatectl
+--------------------------------------------------------------------------------
+3.เปิด Firewall ใช้ UFW
+3.1ติดตั้ง 
+sudo apt install ufw
+3.2 allow ssh
+sudo ufw allow OpenSSH / sudo ufw allow 22/tcp
+3.3 เปิด firewall
+sudo ufw enable
+3.4 ดู status
+sudo ufw status
+--------------------------------------------------------------------------------
+4.ติดตั้ง Fail2ban (กัน brute force)
+4.1 ติดตั้ง
+sudo apt install fail2ban
+4.2 สร้าง config
+sudo nano /etc/fail2ban/jail.local
+[sshd]
+enabled = true
+port = 22
+maxretry = 5
+bantime = 3600
+4.3 restart
+sudo systemctl restart fail2ban
+4.4 ตรวจสอบ
+sudo fail2ban-client status sshd
+--------------------------------------------------------------------------------
+Test Putty
